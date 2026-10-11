@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boardroom - Freelancer Rate Transparency</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #333; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    h1 { font-size: 28px; margin-bottom: 5px; }
+    .subtitle { color: #666; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card h2 { font-size: 18px; margin-bottom: 15px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: 500; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    button { background: #0066cc; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    button:hover { background: #0052a3; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+    .stat { background: #f0f4ff; padding: 15px; border-radius: 4px; text-align: center; }
+    .stat-value { font-size: 24px; font-weight: bold; color: #0066cc; }
+    .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
+    .rates-list { margin-top: 15px; max-height: 400px; overflow-y: auto; }
+    .rate-item { background: #f9f9f9; padding: 12px; border-radius: 4px; margin-bottom: 10px; border-left: 3px solid #0066cc; }
+    .rate-item-header { font-weight: 600; font-size: 14px; }
+    .rate-item-details { font-size: 12px; color: #666; margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Boardroom</h1>
+      <p class="subtitle">Transparent freelancer rates. See what others charge.</p>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Share Your Rate</h2>
+        <form id="submitForm">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="category" required>
+              <option value="">Select category</option>
+              <option value="web-dev">Web Development</option>
+              <option value="design">UI/UX Design</option>
+              <option value="copywriting">Copywriting</option>
+              <option value="marketing">Digital Marketing</option>
+              <option value="consulting">Consulting</option>
+              <option value="data">Data Science</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Experience Level</label>
+            <select id="experience" required>
+              <option value="">Select level</option>
+              <option value="junior">Junior (0-3 years)</option>
+              <option value="mid">Mid-level (3-7 years)</option>
+              <option value="senior">Senior (7+ years)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Location (City/Country)</label>
+            <input type="text" id="location" placeholder="e.g., San Francisco, USA" required>
+          </div>
+          <div class="form-group">
+            <label>Hourly Rate ($)</label>
+            <input type="number" id="hourlyRate" placeholder="e.g., 75" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>Key Skills</label>
+            <input type="text" id="skills" placeholder="e.g., React, Node.js, TypeScript" required>
+          </div>
+          <button type="submit">Submit Rate</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Market Rates</h2>
+        <div class="form-group">
+          <label>Filter by Category</label>
+          <select id="filterCategory">
+            <option value="">All Categories</option>
+            <option value="web-dev">Web Development</option>
+            <option value="design">UI/UX Design</option>
+            <option value="copywriting">Copywriting</option>
+            <option value="marketing">Digital Marketing</option>
+            <option value="consulting">Consulting</option>
+            <option value="data">Data Science</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Experience Level</label>
+          <select id="filterExperience">
+            <option value="">All Levels</option>
+            <option value="junior">Junior</option>
+            <option value="mid">Mid-level</option>
+            <option value="senior">Senior</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" id="filterLocation" placeholder="Filter by location">
+        </div>
+        <button onclick="fetchRates()">Search Rates</button>
+
+        <div id="statsContainer" class="stats"></div>
+        <div id="ratesList" class="rates-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3001';
+
+    document.getElementById('submitForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        category: document.getElementById('category').value,
+        experience: document.getElementById('experience').value,
+        location: document.getElementById('location').value,
+        hourlyRate: document.getElementById('hourlyRate').value,
+        skills: document.getElementById('skills').value
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/api/rates`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        alert('Rate submitted! Refreshing data...');
+        document.getElementById('submitForm').reset();
+        fetchRates();
+      } catch (err) {
+        alert('Error submitting rate: ' + err.message);
+      }
+    });
+
+    async function fetchRates() {
+      const params = new URLSearchParams();
+      const cat = document.getElementById('filterCategory').value;
+      const exp = document.getElementById('filterExperience').value;
+      const loc = document.getElementById('filterLocation').value;
+
+      if (cat) params.append('category', cat);
+      if (exp) params.append('experience', exp);
+      if (loc) params.append('location', loc);
+
+      try {
+        const res = await fetch(`${API_URL}/api/rates?${params}`);
+        const data = await res.json();
+
+        const statsContainer = document.getElementById('statsContainer');
+        const ratesList = document.getElementById('ratesList');
+
+        if (data.stats) {
+          statsContainer.innerHTML = `
+            <div class="stat">
+              <div class="stat-value">$${Math.round(data.stats.median)}</div>
+              <div class="stat-label">Median Rate</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">$${Math.round(data.stats.p25)} - $${Math.round(data.stats.p75)}</div>
+              <div class="stat-label">Interquartile Range</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">${data.stats.count}</div>
+              <div class="stat-label">Total Rates</div>
+            </div>
+          `;
+        }
+
+        ratesList.innerHTML = data.rates.map(r => `
+          <div class="rate-item">
+            <div class="rate-item-header">$${r.hourlyRate}/hr · ${r.category}</div>
+            <div class="rate-item-details">${r.experience} · ${r.location}</div>
+            <div class="rate-item-details">Skills: ${r.skills}</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('ratesList').innerHTML = '<p>Error loading rates. Make sure backend is running.</p>';
+      }
+    }
+
+    fetchRates();
+  </script>
+</body>
+</html>

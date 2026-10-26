@@ -1,34 +1,37 @@
 # Boardroom
 
-Transparent freelancer rate database. See what freelancers in your category, experience level, and location actually charge.
+A shared table of freelancer hourly rates. Freelancers submit what they charge, and anyone can filter by category, experience level, and location to see the median and typical range.
 
 ## Features
 
-- Submit your hourly rate with category, experience, location, and skills
-- Browse market rates filtered by category, experience, and location
-- View statistics: median, quartiles, count
-- All data crowdsourced and transparent
+- Submit an hourly rate with category, experience level (junior, mid, senior), location, and key skills
+- Filter rates by category, experience, and location (partial, case-insensitive match)
+- See the median rate, the 25th to 75th percentile range, and the number of matching rates
+- Entries are saved to a local JSON file
 
-## Quick Start
+## Getting started
+
+Requires Node.js.
 
 ```bash
 npm install
 npm start
 ```
 
-Then open `index.html` in your browser and make API calls to `http://localhost:3001`.
+This starts the API on http://localhost:3001. The server does not serve the page, so open `index.html` directly in your browser. `npm run dev` runs the same command.
 
-## API
+## How it works
 
-- `POST /api/rates` - Submit a rate
-- `GET /api/rates` - Get rates (with optional filters: category, experience, location)
-- `GET /api/categories` - Get all categories
+- `index.html` has a submit form and a "Market Rates" panel with filters, stats, and the matching rates. It calls the API at `http://localhost:3001`.
+- `server.js` is an Express app with three endpoints:
+  - `POST /api/rates` to save a rate.
+  - `GET /api/rates` to return matching rates and stats (median, mean, min, max, p25, p75). Filters: `category`, `experience`, `location`.
+  - `GET /api/categories` to list categories that have submissions.
+- Data is written to `data.json`, created on first run and ignored by git. `utils.js` holds helpers not yet wired in.
 
-## Tech
+## Status
 
-- Node.js + Express
-- Plain HTML/JS frontend
-- JSON file storage
+Prototype. Rates are self-reported and anonymous, with no verification.
 
 ## License
 

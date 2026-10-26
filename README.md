@@ -29,3 +29,7 @@ Then open `index.html` in your browser and make API calls to `http://localhost:3
 - Node.js + Express
 - Plain HTML/JS frontend
 - JSON file storage
+
+## License
+
+MIT, see [LICENSE](LICENSE).
